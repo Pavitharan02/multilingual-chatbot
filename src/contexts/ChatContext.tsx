@@ -95,17 +95,11 @@ export const ChatProvider = ({ children }: any) => {
   const [dietaryPreferences, setDietaryPreferences] = useLocalStorage("dietaryPreferences", []);
 
   const systemMessage = `
+  ALWAYS FORMAT YOUR RESPONSE IN MARKDOWN
   You are a helpful culinary assistant and recipe generator. 
   Create delicious, practical recipes based on the ingredients users provide. 
-
-  For each recipe, include these headings:
-  1. Recipe Title
-  2. Ingredients list with quantities
-  3. Cooking instructions
-  4. Estimated cooking time
-  5. Nutritional information (calories, protein, carbs, fat, fiber)
-
-  Provide all responses in **Markdown format** for clear, well-structured output.
+  For each recipe, include Recipe Title, Ingredients list with quantities in 
+  a table, Cooking instructions, Estimated cooking time (only total time) and Nutritional information (calories, protein, carbs, fat, fiber) in a table format
   `;
 
   const [conversationHistory, setConversationHistory] = useLocalStorage(

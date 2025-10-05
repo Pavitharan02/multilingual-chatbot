@@ -4,61 +4,58 @@ import { useChatContext } from "@/contexts/ChatContext";
 import { cn } from "@/lib/utils";
 import { ArrowUp, Loader2 } from "lucide-react";
 import { useEffect, useRef } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { ChatInput } from "./ChatInput";
 import { MobileRecipePanel } from "@/components/Recipe/MobileRecipePanel";
 import { TTSButton } from "@/components/common/TTSButton";
+import MDEditor from '@uiw/react-md-editor';
 
-// Helper function to format markdown content for better readability
-function formatMarkdown(content: string): string {
-  if (!content) return content;
-  
-  let formatted = content;
-  
-  // Remove standalone asterisks that are formatting artifacts
-  formatted = formatted.replace(/^\*\*\s*$/gm, '');
-  formatted = formatted.replace(/^\*\s*$/gm, '');
-  
-  // Add double newlines before key recipe sections
-  formatted = formatted.replace(/(Recipe Title:)/gi, '## $1');
-  formatted = formatted.replace(/(Ingredients List with Quantities:)/gi, '\n### $1\n');
-  formatted = formatted.replace(/(Cooking Instructions:)/gi, '\n### $1\n');
-  formatted = formatted.replace(/(Step[- ]by[- ]Step Cooking Instructions:)/gi, '\n### $1\n');
-  formatted = formatted.replace(/(Nutritional Information[^:]*:)/gi, '\n### $1\n');
-  formatted = formatted.replace(/(Estimated Cooking[^:]*Time:[^\n]*)/gi, '\n**$1**\n');
-  formatted = formatted.replace(/(Serving Size:[^\n]*)/gi, '**$1**\n');
-  
-  // Fix nutritional info - replace asterisks between items with newlines
-  formatted = formatted.replace(/(Calories:\d+)\*\s*/gi, '$1\n- ');
-  formatted = formatted.replace(/(Protein:[^\*]+)\*\s*/gi, '$1\n- ');
-  formatted = formatted.replace(/(Carbohydrates:[^\*]+)\*\s*/gi, '$1\n- ');
-  formatted = formatted.replace(/(Fat:[^\*]+)\*\s*/gi, '$1\n- ');
-  formatted = formatted.replace(/(Fiber:[^\*\n]+)/gi, '$1');
-  
-  // Format list items - handle asterisks that are at the start of lines
-  formatted = formatted.replace(/^\*\s+([^\n]+)/gm, '- $1');
-  
-  // Format numbered lists
-  formatted = formatted.replace(/^(\d+)\.\s+/gm, '$1. ');
-  
-  // Add newline after closing parentheses in ingredient lists
-  formatted = formatted.replace(/\)([A-Z])/g, ')\n$1');
-  
-  // Add newlines before capital letters that follow lowercase (new sentences)
-  formatted = formatted.replace(/([a-z\)])([A-Z][a-z])/g, '$1\n\n$2');
-  
-  // Clean up multiple newlines (max 2)
-  formatted = formatted.replace(/\n{3,}/g, '\n\n');
-  
-  // Remove empty bullet points
-  formatted = formatted.replace(/^[-*]\s*$/gm, '');
-  
-  // Trim leading/trailing whitespace
-  formatted = formatted.trim();
-  
-  return formatted;
+// Markdown cleaning function
+function cleanLLMMarkdown(raw: string) {
+  let text = raw;
+
+  // Ensure bold headings (e.g., **Heading:**) are always surrounded by blank lines, even if consecutive
+  text = text.replace(/\*\*([^\*]+?:)\*\*/g, '\n\n**$1**\n\n');
+
+  // Add blank line after markdown tables so following text is not included in the table
+  // Find lines that start with '|' and are followed by a line that does not start with '|', and insert a blank line
+  text = text.replace(/((?:^|\n)(?:\|.+\|\n)+)([^\|\n])/gm, '$1\n$2');
+
+  // Split + into new lines for ingredients
+  text = text.replace(/\+ ?/g, "\n- ");
+
+  // Ensure numbered steps have line breaks
+  text = text.replace(/(\d\.)/g, "\n$1 ");
+
+  // Add line breaks before markdown tables (lines starting with |)
+  text = text.replace(/(\n)?(\|.+\|)/g, "\n$2");
+
+  // Add line breaks before headings (###, ##, #)
+  text = text.replace(/(#+ )/g, "\n$1");
+
+  // Remove duplicate empty lines
+  text = text.replace(/\n{3,}/g, "\n\n");
+
+  // Trim leading/trailing spaces
+  return text.trim();
 }
+
+// Component to render cleaned markdown
+const MarkdownRenderer = ({ content }: { content: string }) => {
+  const cleanedContent = cleanLLMMarkdown(content);
+  
+  return (
+    <div className="markdown-content">
+      <MDEditor.Markdown 
+        source={cleanedContent}
+        style={{ 
+          backgroundColor: 'transparent',
+          color: 'inherit'
+        }}
+        data-color-mode="auto"
+      />
+    </div>
+  );
+};
 
 export const ChatComponent = () => {
   const {
@@ -105,12 +102,21 @@ export const ChatComponent = () => {
                 )}
               >
                 <CardContent className="p-4">
-                  <ReactMarkdown 
-                    className="markdown text-sm break-words"
-                    remarkPlugins={[remarkGfm]}
-                  >
-                    {formatMarkdown(entry.content)}
-                  </ReactMarkdown>
+                  {entry.role === "user" ? (
+                    <div className="text-sm break-words whitespace-pre-wrap">
+                      {entry.content}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-sm">
+                        <MarkdownRenderer content={entry.content} />
+                      </div>
+                      {/* Raw/plain text version for debugging */}
+                      <div className="text-xs mt-2 p-2 bg-muted/50 rounded border border-dashed border-border text-muted-foreground font-mono whitespace-pre-wrap">
+                        {entry.content}
+                      </div>
+                    </>
+                  )}
                   {entry.role === "assistant" && (
                     <div className="mt-3 flex justify-start">
                       <TTSButton 
@@ -140,15 +146,11 @@ export const ChatComponent = () => {
                 <div className="pt-4 flex-shrink-0">
                   <Loader2 className="size-5 animate-spin" />
                 </div>
-
                 <Card className="max-w-[80%] border-none shadow-none w-fit">
                   <CardContent className="p-4">
-                    <ReactMarkdown 
-                      className="markdown text-sm break-words"
-                      remarkPlugins={[remarkGfm]}
-                    >
-                      {formatMarkdown(responseStream)}
-                    </ReactMarkdown>
+                    <div className="text-sm">
+                      <MarkdownRenderer content={responseStream} />
+                    </div>
                   </CardContent>
                 </Card>
               </div>
