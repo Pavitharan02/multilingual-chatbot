@@ -80,12 +80,12 @@ export const ChatProvider = ({ children }: any) => {
     "Runyoro-Kitara",
     "Lusoga",
     "Ateso",
-    "Lubwisi (Lugbara)"
+    "Lubwisi"
   ];
   const [currentLanguage, setCurrentLanguage] = useLocalStorage("currentLanguage", "English");
   
   // Set default user query text
-  const [prompt, setPrompt] = useState("Generate a recipe based on these available ingredient and diatery preferences");
+  const [prompt, setPrompt] = useState("");
   const [userPromptPlaceholder, setUserPromptPlaceholder] = useState(null);
   const [responseStream, setResponseStream] = useState("");
   const [responseStreamLoading, setResponseStreamLoading] = useState(false);

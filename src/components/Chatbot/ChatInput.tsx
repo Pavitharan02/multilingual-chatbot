@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { useChatContext } from "@/contexts/ChatContext";
 import { useFileUpload } from "@/contexts/FileUploadContext";
 import { checkFileType } from "@/utils/fileUtility";
+import { STTButton } from "@/components/common/STTButton";
 
 export const ChatInput = () => {
   const {
@@ -143,6 +144,8 @@ export const ChatInput = () => {
                 ))}
               </SelectContent>
             </Select>
+
+            <STTButton />
 
             <Button
               size="icon"
