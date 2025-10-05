@@ -105,8 +105,6 @@ export const ChatProvider = ({ children }: any) => {
   4. Estimated cooking time
   5. Nutritional information (calories, protein, carbs, fat, fiber)
 
-  Respond in ${currentLanguage} language. Regardless of what language the user writes in, your entire response must be in ${currentLanguage} language.
-
   Provide all responses in **Markdown format** for clear, well-structured output.
   `;
 
@@ -200,6 +198,7 @@ export const ChatProvider = ({ children }: any) => {
           ? generateDocumentString(uploadedDocuments)
           : "";
 
+
       // Build comprehensive prompt with all information
       let combinedPrompt = prompt && prompt.trim() ? prompt : defaultQuery;
       if (ingredients.length > 0) {
@@ -211,6 +210,9 @@ export const ChatProvider = ({ children }: any) => {
       if (documentString) {
         combinedPrompt = `${documentString}\n\n${combinedPrompt}`;
       }
+      // Prepend language instruction to the prompt
+      const languageInstruction = `Respond ONLY in ${currentLanguage} language.`;
+      combinedPrompt = `${languageInstruction}\n\n${combinedPrompt}`;
 
       const res: any = await fetch(`http://localhost:${PORT}/ask`, {
         method: "POST",

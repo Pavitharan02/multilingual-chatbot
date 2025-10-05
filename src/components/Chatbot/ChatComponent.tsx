@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ChatInput } from "./ChatInput";
 import { MobileRecipePanel } from "@/components/Recipe/MobileRecipePanel";
+import { TTSButton } from "@/components/common/TTSButton";
 
 // Helper function to format markdown content for better readability
 function formatMarkdown(content: string): string {
@@ -103,14 +104,22 @@ export const ChatComponent = () => {
                     : "mr-auto border-none shadow-none"
                 )}
               >
-                              <CardContent className="p-4">
-                <ReactMarkdown 
-                  className="markdown text-sm break-words"
-                  remarkPlugins={[remarkGfm]}
-                >
-                  {formatMarkdown(entry.content)}
-                </ReactMarkdown>
-              </CardContent>
+                <CardContent className="p-4">
+                  <ReactMarkdown 
+                    className="markdown text-sm break-words"
+                    remarkPlugins={[remarkGfm]}
+                  >
+                    {formatMarkdown(entry.content)}
+                  </ReactMarkdown>
+                  {entry.role === "assistant" && (
+                    <div className="mt-3 flex justify-start">
+                      <TTSButton 
+                        text={entry.content} 
+                        messageId={`message-${index}`}
+                      />
+                    </div>
+                  )}
+                </CardContent>
               </Card>
             </div>
           ))}
