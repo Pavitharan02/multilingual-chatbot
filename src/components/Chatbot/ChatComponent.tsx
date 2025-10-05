@@ -12,6 +12,10 @@ import MDEditor from '@uiw/react-md-editor';
 // Markdown cleaning function
 function cleanLLMMarkdown(raw: string) {
   let text = raw;
+  // Remove setext-style heading underlines (lines of only '=' or '-' at least 3 long)
+  text = text.replace(/^\s*[=-]{3,}\s*$/gm, '');
+  // Remove trailing inline '=====' or '---' after text, even if followed by more markdown (e.g., 'Cheesy Egg Bites===============## Ingredients:')
+  text = text.replace(/([\w\)])\s*[=-]{3,}(?=\s|#|$)/g, '$1');
 
   // Ensure bold headings (e.g., **Heading:**) are always surrounded by blank lines, even if consecutive
   text = text.replace(/\*\*([^\*]+?:)\*\*/g, '\n\n**$1**\n\n');
@@ -23,8 +27,13 @@ function cleanLLMMarkdown(raw: string) {
   // Split + into new lines for ingredients
   text = text.replace(/\+ ?/g, "\n- ");
 
-  // Ensure numbered steps have line breaks
-  text = text.replace(/(\d\.)/g, "\n$1 ");
+  // Ensure numbered steps have line breaks, but do NOT break numbers in tables (e.g., 3.5g)
+  // Only add line breaks before numbers at the start of a line or after whitespace, not after a table pipe
+  text = text.replace(/(^|\s)(\d\.)/g, (match, p1, p2) => {
+    // If the previous character is a pipe (|), don't add a line break
+    if (p1.endsWith('|')) return match;
+    return `${p1}\n${p2} `;
+  });
 
   // Add line breaks before markdown tables (lines starting with |)
   text = text.replace(/(\n)?(\|.+\|)/g, "\n$2");
@@ -107,15 +116,9 @@ export const ChatComponent = () => {
                       {entry.content}
                     </div>
                   ) : (
-                    <>
                       <div className="text-sm">
                         <MarkdownRenderer content={entry.content} />
                       </div>
-                      {/* Raw/plain text version for debugging */}
-                      <div className="text-xs mt-2 p-2 bg-muted/50 rounded border border-dashed border-border text-muted-foreground font-mono whitespace-pre-wrap">
-                        {entry.content}
-                      </div>
-                    </>
                   )}
                   {entry.role === "assistant" && (
                     <div className="mt-3 flex justify-start">

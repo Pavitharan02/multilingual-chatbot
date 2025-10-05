@@ -172,6 +172,7 @@ export const ChatProvider = ({ children }: any) => {
     const ingredientsSummary = ingredients.length > 0 
       ? `\nAvailable Ingredients: ${ingredients.join(", ")}`
       : "";
+    // Only add dietary preferences if any are selected
     const dietarySummary = dietaryPreferences.length > 0 
       ? `\nDietary Preferences: ${dietaryPreferences.join(", ")}`
       : "";
@@ -198,6 +199,7 @@ export const ChatProvider = ({ children }: any) => {
       if (ingredients.length > 0) {
         combinedPrompt += `\n\nAvailable Ingredients: ${ingredients.join(", ")}`;
       }
+      // Only add dietary preferences if any are selected
       if (dietaryPreferences.length > 0) {
         combinedPrompt += `\n\nDietary Preferences/Restrictions: ${dietaryPreferences.join(", ")}`;
       }
